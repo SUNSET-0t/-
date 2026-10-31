@@ -356,6 +356,14 @@ function mountUi() {
         e.stopPropagation();
         setTimeout(openPanel, 0);
     });
+    // SillyTavern handles accordion clicks through a delegated document handler.
+    // Forward keyboard activation to that same native handler.
+    entry.find('.inline-drawer-header').on('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            $(this).trigger('click');
+        }
+    });
 
     const root = $( [
         '<div class="npc-r2b-overlay" id="npc-r2b-overlay" aria-hidden="true">',
