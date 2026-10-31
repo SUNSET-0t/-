@@ -1,22 +1,38 @@
-name: Channel preset unit tests
+name: Independent channels integration tests
 on:
   push:
     branches: ['feature/independent-channels', main]
-    paths: ['connections/**', 'tests/providers.test.mjs', '.github/workflows/channels.yml']
+    paths: ['connections/**', 'server/**', 'channels-entry.js', 'tests/channels*', 'tests/providers.test.mjs', '.github/workflows/channels.yml', 'package.json']
   pull_request:
-    paths: ['connections/**', 'tests/providers.test.mjs', '.github/workflows/channels.yml']
 permissions:
   contents: read
 jobs:
-  preset-contracts:
+  isolated-service-and-mobile-ui:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check syntax and offline contracts
+      - name: Syntax and offline protocol/security tests
         run: |
-          node --check connections/providers.mjs
-          node --test tests/providers.test.mjs
+          for file in connections/*.mjs server/*.mjs channels-entry.js tests/channels-browser.mjs; do node --check "$file"; done
+          node --test tests/providers.test.mjs tests/channels-server.test.mjs
+      - name: Install browser test dependencies
+        run: npm install --no-save --no-package-lock jquery@3.7.1 jsdom@25 playwright@1.56.1 express@4.21.2
+      - name: Install test browser
+        run: npx playwright install --with-deps chromium
+      - name: Existing interface regression tests
+        run: |
+          node tests/ui-smoke.mjs
+          node tests/browser-ui.mjs
+      - name: Real browser and local isolated-service integration
+        run: node tests/channels-browser.mjs
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npc-channel-screenshots
+          path: test-artifacts/
+          if-no-files-found: ignore
