@@ -1,42 +1,49 @@
 name: Validate R2-B extension
-
 on:
   push:
-    branches: [main]
+    branches: [main, 'fix/**']
   pull_request:
-
+permissions:
+  contents: read
 jobs:
-  syntax-and-manifest:
+  syntax-and-ui:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check JavaScript syntax as ES modules
+      - name: Check module syntax
         run: |
-          node --input-type=module --check < index.js
-          node --input-type=module --check < prompts.js
-          node --input-type=module --check < fixtures.js
-      - name: Check extension manifest and module references
+          for file in bootstrap.js panel-host.js index.js prompts.js fixtures.js; do
+            node --input-type=module --check < "$file"
+          done
+          node --check tests/browser-ui.mjs
+      - name: Check extension manifest and files
         run: |
           node --input-type=module <<'NODE'
           import { readFileSync, existsSync } from 'node:fs';
           const manifest = JSON.parse(readFileSync('manifest.json', 'utf8'));
-          for (const p of [manifest.js, manifest.css, 'prompts.js', 'fixtures.js']) {
-            if (!p || !existsSync(p)) throw new Error('Missing extension file: ' + p);
+          for (const path of [manifest.js, manifest.css, 'index.js', 'panel-host.js', 'panel-host.css', 'prompts.js', 'fixtures.js']) {
+            if (!path || !existsSync(path)) throw new Error('Missing file: ' + path);
           }
-          if (manifest.generate_interceptor !== 'npcR2BInterceptor') {
-            throw new Error('Incorrect interceptor name');
-          }
-          const source = readFileSync(manifest.js, 'utf8');
-          if (!source.includes('globalThis.' + manifest.generate_interceptor)) {
-            throw new Error('Entrypoint does not export the interceptor');
-          }
+          if (manifest.generate_interceptor !== 'npcR2BInterceptor') throw new Error('Wrong interceptor');
+          if (!readFileSync('index.js','utf8').includes('globalThis.' + manifest.generate_interceptor)) throw new Error('Missing interceptor');
           console.log('Manifest and files verified');
           NODE
-
-      - name: Install DOM test dependencies
-        run: npm install --no-save --no-package-lock jquery@3.7.1 jsdom@25
-      - name: Test menu and modal opening without any API calls
+      - name: Install test dependencies
+        run: npm install --no-save --no-package-lock jquery@3.7.1 jsdom@25 playwright@1.56.1
+      - name: Run existing logic and DOM smoke test
         run: node tests/ui-smoke.mjs
+      - name: Install real browser
+        run: npx playwright install --with-deps chromium
+      - name: Check mobile and desktop visibility and interactions
+        run: node tests/browser-ui.mjs
+      - name: Save browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npc-r2b-ui-screenshots
+          path: test-artifacts/
+          if-no-files-found: ignore

@@ -1,0 +1,47 @@
+/* Use the host's native dialog, not a fixed overlay competing with its layers. */
+#npc-r2b-panel-parking[hidden] { display:none !important; }
+#npc-r2b-overlay.r2b-hosted {
+    display:block !important;
+    position:static !important;
+    inset:auto !important;
+    z-index:auto !important;
+    visibility:visible !important;
+    opacity:1 !important;
+    width:100%;
+    height:auto;
+    max-width:100%;
+}
+#npc-r2b-overlay.r2b-hosted > .npc-r2b-backdrop { display:none !important; }
+#npc-r2b-overlay.r2b-hosted > .npc-r2b-shell {
+    width:100%;
+    height:76vh;
+    height:76dvh;
+    min-height:0;
+    max-height:850px;
+    box-shadow:none;
+    border:0;
+    border-radius:10px;
+}
+#npc-r2b-overlay.r2b-hosted [hidden] { display:none !important; }
+.npc-r2b-native-popup { max-width:min(810px,96vw); padding:8px; }
+.npc-r2b-native-popup .popup-content { padding:0; overflow:hidden; }
+.npc-r2b-native-popup .popup-body { min-width:0; }
+#npc-r2b-overlay[data-npc-r2b-host="inline"] > .npc-r2b-shell {
+    height:auto;
+    max-height:none;
+    border:1px solid var(--SmartThemeBorderColor);
+}
+#npc-r2b-overlay[data-npc-r2b-host="inline"] .npc-r2b-scroll {
+    flex:initial;
+    max-height:65vh;
+    overflow:auto;
+}
+#npc-r2b-overlay[data-npc-r2b-host="inline"] .npc-r2b-header { padding:10px; }
+#npc-r2b-overlay[data-npc-r2b-host="inline"] .npc-r2b-info-bar { padding:8px; }
+#npc-r2b-overlay[data-npc-r2b-host="inline"] .npc-r2b-no-auto { display:none; }
+[data-npc-r2b-ui-status] { overflow-wrap:anywhere; }
+@media(max-width:700px) {
+    .npc-r2b-native-popup { width:96vw; max-width:96vw; padding:5px; }
+    #npc-r2b-overlay.r2b-hosted > .npc-r2b-shell { height:77vh; height:77dvh; }
+    #npc-r2b-overlay[data-npc-r2b-host="inline"] > .npc-r2b-shell { height:auto; }
+}
