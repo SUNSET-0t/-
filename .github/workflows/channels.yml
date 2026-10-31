@@ -1,0 +1,22 @@
+name: Channel preset unit tests
+on:
+  push:
+    branches: ['feature/independent-channels', main]
+    paths: ['connections/**', 'tests/providers.test.mjs', '.github/workflows/channels.yml']
+  pull_request:
+    paths: ['connections/**', 'tests/providers.test.mjs', '.github/workflows/channels.yml']
+permissions:
+  contents: read
+jobs:
+  preset-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check syntax and offline contracts
+        run: |
+          node --check connections/providers.mjs
+          node --test tests/providers.test.mjs
