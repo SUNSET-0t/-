@@ -1,7 +1,7 @@
 name: Independent channels integration tests
 on:
   push:
-    branches: ['feature/independent-channels', main]
+    branches: ['feature/independent-channels', 'fix/**', main]
   pull_request:
 permissions:
   contents: read
@@ -16,8 +16,8 @@ jobs:
           node-version: '22'
       - name: Syntax, package entries and offline protocol/security tests
         run: |
-          for file in connections/*.mjs server/*.mjs channels-entry.js bootstrap.js tests/channels-browser.mjs; do node --check "$file"; done
-          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('manifest.json'));const p=JSON.parse(fs.readFileSync('package.json'));if(m.js!=='channels-entry.js'||p.main!=='server/index.mjs')throw Error('Incorrect release entrypoints');"
+          for file in connections/*.mjs server/*.mjs release-*.js channels-entry.js bootstrap.js tests/channels-browser.mjs; do node --check "$file"; done
+          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('manifest.json'));const p=JSON.parse(fs.readFileSync('package.json'));if(!fs.existsSync(m.js)||p.main!=='server/index.mjs')throw Error('Incorrect release entrypoints');"
           node --test tests/providers.test.mjs tests/channels-server.test.mjs tests/provider-silicon.test.mjs
       - name: Install browser test dependencies
         run: npm install --no-save --no-package-lock jquery@3.7.1 jsdom@25 playwright@1.56.1 express@4.21.2

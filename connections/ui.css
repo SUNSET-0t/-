@@ -1,1 +1,52 @@
-.nc-root{padding:0 0 18px;min-width:0}.nc-root h3,.nc-root h4{margin:12px 0}.nc-state{padding:10px;border:1px solid var(--SmartThemeBorderColor);border-radius:8px;font-size:13px;line-height:1.6;overflow-wrap:anywhere}.nc-error{color:#ad2830!important}.nc-note,.nc-root small{font-size:12px;line-height:1.6;opacity:.8}.nc-root small{display:block;margin:4px 0}.nc-toolbar,.nc-actions,.nc-key-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.nc-toolbar{justify-content:space-between}.nc-channel{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;margin:10px 0;border:1px solid var(--SmartThemeBorderColor);border-radius:12px;background:var(--SmartThemeBlurTintColor);overflow-wrap:anywhere}.nc-channel>div{min-width:0}.nc-channel button{flex-shrink:0}.nc-stage,.nc-editor-card{padding:13px;margin:12px 0;border:1px solid var(--SmartThemeBorderColor);border-radius:12px}.nc-field{display:flex;flex-direction:column;gap:6px;margin:10px 0;min-width:0}.nc-root :is(input,select){width:100%;max-width:100%;min-width:0;font-size:14px!important;min-height:42px}.nc-key-row input{flex:1;width:0}.nc-key-row button{flex:none}.nc-check{display:flex;gap:8px;align-items:flex-start;font-size:12px;margin:10px 0;line-height:1.5}.nc-root input[type=checkbox]{width:18px;height:18px;min-height:18px;flex:none}.nc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.nc-root .menu_button{margin:4px 0;min-height:42px}.nc-actions{margin-top:12px}.nc-root [readonly]{opacity:.75}.nc-warning{border-left:3px solid #b37b10;padding:8px}.nc-test-output{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}.nc-developer{border:1px dashed var(--SmartThemeBorderColor);padding:10px;margin-top:16px}.nc-generic-home{padding:8px 0;line-height:1.7}.nc-root details{margin:12px 0}.nc-root summary{cursor:pointer}@media(max-width:420px){.nc-grid{grid-template-columns:1fr}.nc-channel{align-items:flex-start}.nc-actions button{flex:1 1 auto}.nc-root :is(input,select){font-size:16px!important}}
+/* Independent channel UI; only style controls owned by this extension. */
+.nc-root{padding:0 0 18px;min-width:0}
+.nc-root h3,.nc-root h4{margin:12px 0}
+.nc-state{padding:10px;border:1px solid var(--SmartThemeBorderColor);border-radius:8px;font-size:13px;line-height:1.6;overflow-wrap:anywhere}
+.nc-error{color:#ad2830!important}
+.nc-note,.nc-root small{font-size:12px;line-height:1.6;opacity:.8}
+.nc-root small{display:block;margin:4px 0}
+.nc-toolbar,.nc-actions,.nc-key-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.nc-toolbar{justify-content:space-between}
+.nc-toolbar h4{flex:1 1 auto;min-width:0}
+.nc-channel{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;margin:10px 0;border:1px solid var(--SmartThemeBorderColor);border-radius:12px;background:var(--SmartThemeBlurTintColor);overflow-wrap:anywhere}
+.nc-channel>div{min-width:0}
+.nc-channel button{flex-shrink:0}
+.nc-stage,.nc-editor-card{padding:13px;margin:12px 0;border:1px solid var(--SmartThemeBorderColor);border-radius:12px}
+.nc-field{display:flex;flex-direction:column;gap:6px;margin:10px 0;min-width:0}
+.nc-root :is(input,select){width:100%;max-width:100%;min-width:0;font-size:14px!important;min-height:42px}
+.nc-root .nc-key-row{flex-wrap:nowrap}
+.nc-root .nc-key-row input{flex:1 1 0;width:0;min-width:0}
+.nc-key-row button{flex:none}
+.nc-check{display:flex;gap:8px;align-items:flex-start;font-size:12px;margin:10px 0;line-height:1.5}
+.nc-root input[type=checkbox]{width:18px;height:18px;min-height:18px;flex:none}
+.nc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+/* SillyTavern's global .menu_button uses width:min-content. Chinese labels
+   consequently wrap after every character unless this is overridden. */
+#npc-r2b-overlay :is(.nc-root,.nc-generic-home) button.menu_button {
+    display:inline-flex;align-items:center;justify-content:center;
+    width:max-content;min-width:44px;max-width:100%;min-height:44px;
+    height:auto;aspect-ratio:auto;flex:0 0 auto;box-sizing:border-box;
+    white-space:nowrap;word-break:normal;overflow-wrap:normal;writing-mode:horizontal-tb;
+    padding:9px 12px;margin:4px 0;font-size:14px;line-height:1.45;
+}
+#npc-r2b-overlay .nc-generic-home button.menu_button{width:100%;min-width:0}
+#npc-r2b-overlay .nc-root button:disabled{cursor:not-allowed}
+.nc-actions{margin-top:12px}
+.nc-root [readonly]{opacity:.75}
+.nc-warning{border-left:3px solid #b37b10;padding:8px}
+.nc-test-output{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px}
+.nc-developer{border:1px dashed var(--SmartThemeBorderColor);padding:10px;margin-top:16px}
+.nc-generic-home{padding:8px 0;line-height:1.7}
+.nc-root details{margin:12px 0}
+.nc-root summary{cursor:pointer}
+.nc-install-guide{padding:12px;margin:12px 0;border:1px solid var(--SmartThemeBorderColor);border-radius:10px;line-height:1.65;font-size:13px}
+.nc-install-guide strong{display:block;margin-bottom:6px}
+.nc-install-guide p{margin:6px 0}
+.nc-install-guide code{display:block;white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0;padding:8px;border:1px solid var(--SmartThemeBorderColor);border-radius:7px;font-size:12px;user-select:text}
+#npc-r2b-overlay .nc-install-guide[hidden]{display:none!important}
+@media(max-width:420px){
+    .nc-grid{grid-template-columns:1fr}
+    .nc-channel{align-items:flex-start}
+    #npc-r2b-overlay .nc-actions button.menu_button{width:100%;min-width:0;flex:1 1 100%}
+    .nc-root :is(input,select){font-size:16px!important}
+}
