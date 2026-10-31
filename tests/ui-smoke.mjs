@@ -44,6 +44,28 @@ await new Promise(resolve => setTimeout(resolve, 100));
 
 assert.equal($('#npc-r2b-wand').length,1,'Wand shortcut must be visible');
 assert.equal($('#npc-r2b-open').length,1,'Settings shortcut must be visible');
+const settingsDrawer = $('.npc-r2b-settings-entry .inline-drawer');
+const nativeHeader = settingsDrawer.children('.inline-drawer-toggle.inline-drawer-header');
+const nativeContent = settingsDrawer.children('.inline-drawer-content');
+assert.equal(settingsDrawer.length,1,'Settings UI must use SillyTavern native drawer');
+assert.equal(nativeHeader.length,1,'Native accordion header must exist');
+assert.equal(nativeContent.length,1,'Native accordion content must exist');
+assert.equal(nativeHeader.find('.inline-drawer-icon.down.fa-circle-chevron-down').length,1,
+    'Header must include standard SillyTavern down-arrow icon');
+assert.equal(nativeContent.css('display'),'none','Settings accordion must start collapsed');
+// Simulate SillyTavern's delegated inline-drawer-toggle handler.
+$(dom.window.document).on('click','.inline-drawer-toggle',function() {
+    const drawer = $(this).closest('.inline-drawer');
+    drawer.children('.inline-drawer-content').toggle();
+    drawer.children('.inline-drawer-header').find('.inline-drawer-icon')
+        .toggleClass('down up').toggleClass('fa-circle-chevron-down fa-circle-chevron-up');
+});
+nativeHeader.trigger('click');
+assert.notEqual(nativeContent.css('display'),'none','Native accordion must expand on click');
+nativeHeader.trigger('click');
+assert.equal(nativeContent.css('display'),'none','Native accordion must collapse on second click');
+nativeHeader.trigger($.Event('keydown',{key:'Enter'}));
+assert.notEqual(nativeContent.css('display'),'none','Native accordion must work with keyboard activation');
 assert.equal($('#npc-r2b-overlay').length,1,'Dialog must exist');
 assert.equal($('#npc-r2b-input').length,1,'Input editor must exist');
 assert.equal($('#npc-r2b-profile option[value="lite"]').length,1,'Profile must be listed');
