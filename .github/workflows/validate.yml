@@ -1,0 +1,37 @@
+name: Validate R2-B extension
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  syntax-and-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JavaScript syntax as ES modules
+        run: |
+          node --input-type=module --check < index.js
+          node --input-type=module --check < prompts.js
+          node --input-type=module --check < fixtures.js
+      - name: Check extension manifest and module references
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, existsSync } from 'node:fs';
+          const manifest = JSON.parse(readFileSync('manifest.json', 'utf8'));
+          for (const p of [manifest.js, manifest.css, 'prompts.js', 'fixtures.js']) {
+            if (!p || !existsSync(p)) throw new Error('Missing extension file: ' + p);
+          }
+          if (manifest.generate_interceptor !== 'npcR2BInterceptor') {
+            throw new Error('Incorrect interceptor name');
+          }
+          const source = readFileSync(manifest.js, 'utf8');
+          if (!source.includes('globalThis.' + manifest.generate_interceptor)) {
+            throw new Error('Entrypoint does not export the interceptor');
+          }
+          console.log('Manifest and files verified');
+          NODE
