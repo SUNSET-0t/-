@@ -2,7 +2,6 @@ name: Independent channels integration tests
 on:
   push:
     branches: ['feature/independent-channels', main]
-    paths: ['connections/**', 'server/**', 'channels-entry.js', 'tests/channels*', 'tests/providers.test.mjs', '.github/workflows/channels.yml', 'package.json']
   pull_request:
 permissions:
   contents: read
@@ -15,10 +14,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Syntax and offline protocol/security tests
+      - name: Syntax, package entries and offline protocol/security tests
         run: |
-          for file in connections/*.mjs server/*.mjs channels-entry.js tests/channels-browser.mjs; do node --check "$file"; done
-          node --test tests/providers.test.mjs tests/channels-server.test.mjs
+          for file in connections/*.mjs server/*.mjs channels-entry.js bootstrap.js tests/channels-browser.mjs; do node --check "$file"; done
+          node -e "const fs=require('fs');const m=JSON.parse(fs.readFileSync('manifest.json'));const p=JSON.parse(fs.readFileSync('package.json'));if(m.js!=='channels-entry.js'||p.main!=='server/index.mjs')throw Error('Incorrect release entrypoints');"
+          node --test tests/providers.test.mjs tests/channels-server.test.mjs tests/provider-silicon.test.mjs
       - name: Install browser test dependencies
         run: npm install --no-save --no-package-lock jquery@3.7.1 jsdom@25 playwright@1.56.1 express@4.21.2
       - name: Install test browser

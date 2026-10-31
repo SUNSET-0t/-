@@ -1,12 +1,12 @@
 {
-  "display_name": "NPC R2-B 决策实验台",
+  "display_name": "NPC 人物决策 · 独立渠道实验版",
   "loading_order": 100,
   "requires": [],
   "optional": [],
-  "js": "bootstrap.js",
+  "js": "channels-entry.js",
   "css": "style.css",
   "author": "NPC Simulator Project",
-  "version": "0.1.4-r2b",
+  "version": "0.2.0-r2b",
   "homePage": "https://github.com/SUNSET-0t/-",
   "auto_update": true,
   "generate_interceptor": "npcR2BInterceptor"

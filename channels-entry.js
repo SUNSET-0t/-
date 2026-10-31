@@ -22,7 +22,25 @@ const timer=setInterval(()=>{
     const details=document.createElement('details'),title=document.createElement('summary');title.textContent='旧版实验参数';details.append(title);while(advanced.firstChild)details.append(advanced.firstChild);old.append(details);advanced.append(old);
     const input=document.getElementById('npc-r2b-input');if(input)input.value='';
     const mapping=document.getElementById('npc-r2b-mapping');if(mapping)mapping.value='';
-    const status=document.getElementById('npc-r2b-status');if(status)status.textContent='独立接口配置阶段 · 未读取聊天 · 未调用模型';
+    const footer=document.getElementById('npc-r2b-status');
+    if(footer)footer.textContent='独立接口配置阶段 · 未读取聊天';
+    function syncFooter(){
+        const status=document.getElementById('nc-state');
+        if(!status||!footer||old.open)return;
+        footer.textContent=status.textContent;
+        footer.classList.toggle('r2b-error',status.classList.contains('nc-error'));
+        footer.classList.remove('r2b-ok','r2b-working');
+    }
+    // Opening the modern panel must not invoke the legacy Connection Profiles refresh.
+    document.addEventListener('click',event=>{
+        if(!old.open&&event.target?.closest?.('#npc-r2b-refresh')){
+            event.preventDefault();event.stopImmediatePropagation();syncFooter();
+        }
+    },true);
     mountChannelManager(advanced);
+    const status=document.getElementById('nc-state');
+    if(status)new MutationObserver(syncFooter).observe(status,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
+    old.addEventListener('toggle',()=>{if(!old.open)syncFooter();});
+    syncFooter();
     document.querySelector('.npc-r2b-tab[data-tab=advanced]')?.click();
 },100);
