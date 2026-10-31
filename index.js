@@ -258,16 +258,34 @@ async function copyResult() {
 
 
 function openPanel() {
-    const overlay = $('#npc-r2b-overlay');
-    if (!overlay.length) return;
-    loadProfiles();
-    refreshButtons();
-    overlay.addClass('r2b-visible').attr('aria-hidden', 'false');
-    $('#npc-r2b-close').trigger('focus');
+    try {
+        const overlay = $('#npc-r2b-overlay');
+        if (!overlay.length) {
+            console.error('[NPC R2-B] 未找到弹窗节点，插件界面可能尚未初始化。');
+            if (typeof toastr !== 'undefined') toastr.error('NPC 面板尚未初始化，请刷新酒馆页面。', 'NPC R2-B');
+            return;
+        }
+        loadProfiles();
+        refreshButtons();
+        overlay.addClass('r2b-visible').attr('aria-hidden', 'false');
+        // SillyTavern installations use different modal/backdrop layers.
+        // Force the active sheet on top without changing any persistent layout.
+        overlay[0].style.setProperty('display', 'flex', 'important');
+        overlay[0].style.setProperty('visibility', 'visible', 'important');
+        overlay[0].style.setProperty('z-index', '2147483000', 'important');
+        $('#npc-r2b-close').trigger('focus');
+    } catch (e) {
+        console.error('[NPC R2-B] 打开人物决策界面失败', e);
+        if (typeof toastr !== 'undefined') toastr.error('无法打开 NPC 面板：' + (e?.message || e), 'NPC R2-B');
+    }
 }
 
 function closePanel() {
-    $('#npc-r2b-overlay').removeClass('r2b-visible').attr('aria-hidden', 'true');
+    const overlay = $('#npc-r2b-overlay');
+    overlay.removeClass('r2b-visible').attr('aria-hidden', 'true');
+    if (overlay.length) {
+        for (const name of ['display', 'visibility', 'z-index']) overlay[0].style.removeProperty(name);
+    }
 }
 
 function showTab(tab) {
@@ -297,11 +315,15 @@ function addWandEntry() {
         '<div class="fa-solid fa-brain extensionsMenuExtensionButton npc-r2b-wand-icon"></div>' +
         '<span>NPC · 人物决策</span></div>'
     );
-    item.on('click', openPanel);
+    item.on('click', e => {
+        e.preventDefault();
+        // Let SillyTavern finish its wand-menu click/close handlers first.
+        setTimeout(openPanel, 0);
+    });
     item.on('keydown', e => {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            openPanel();
+            setTimeout(openPanel, 0);
         }
     });
     menu.prepend(item);
@@ -319,7 +341,10 @@ function mountUi() {
     );
     const settingsHost = $('#extensions_settings2').length ? $('#extensions_settings2') : $('#extensions_settings');
     settingsHost.append(entry);
-    entry.find('#npc-r2b-open').on('click', openPanel);
+    entry.find('#npc-r2b-open').on('click', e => {
+        e.preventDefault();
+        setTimeout(openPanel, 0);
+    });
 
     const root = $( [
         '<div class="npc-r2b-overlay" id="npc-r2b-overlay" aria-hidden="true">',
@@ -428,6 +453,10 @@ function mountUi() {
     refreshButtons();
     showTab('test');
     addWandEntry();
+    // Some SillyTavern builds create/recreate the wand menu after extensions load.
+    // Retry without duplicating entries or making API requests.
+    setTimeout(addWandEntry, 700);
+    setTimeout(addWandEntry, 2200);
 }
 
 globalThis.npcR2BInterceptor = async function(chat, contextSize, abort, type) {
@@ -450,10 +479,12 @@ jQuery(() => {
     eventSource.on(event_types.GENERATION_ENDED, generationEnded);
     eventSource.on(event_types.GENERATION_STOPPED, generationEnded);
     eventSource.on(event_types.CHAT_CHANGED, () => {
+        addWandEntry();
         if (state.armed && getChatKey() !== state.chatKey) {
             disarm(true);
             status('切换了聊天，已取消原聊天的一次性注入。', 'error');
         }
     });
+    if (event_types.APP_READY) eventSource.on(event_types.APP_READY, addWandEntry);
     console.log('[NPC R2-B] 可安装实验插件已加载，默认不触发任何 API 请求。');
 });
