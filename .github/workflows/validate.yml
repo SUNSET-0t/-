@@ -35,3 +35,8 @@ jobs:
           }
           console.log('Manifest and files verified');
           NODE
+
+      - name: Install DOM test dependencies
+        run: npm install --no-save --no-package-lock jquery@3.7.1 jsdom@25
+      - name: Test menu and modal opening without any API calls
+        run: node tests/ui-smoke.mjs
