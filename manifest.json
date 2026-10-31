@@ -1,0 +1,13 @@
+{
+  "display_name": "NPC R2-B 决策实验台",
+  "loading_order": 100,
+  "requires": [],
+  "optional": [],
+  "js": "index.js",
+  "css": "style.css",
+  "author": "NPC Simulator Project",
+  "version": "0.1.0-r2b",
+  "homePage": "https://github.com/SUNSET-0t/-",
+  "auto_update": true,
+  "generate_interceptor": "npcR2BInterceptor"
+}
