@@ -332,17 +332,28 @@ function addWandEntry() {
 function mountUi() {
     // Keep one panel instance. Both entries open the same mobile-first dialog,
     // avoiding duplicate IDs or loss of state between settings and the wand menu.
+    // Use SillyTavern's native inline-drawer structure, not a custom card.
+    // Its delegated click handler and theme control the accordion appearance.
     const entry = $(
         '<div class="npc-r2b-settings-entry">' +
-        '<div class="npc-r2b-settings-identity"><span class="npc-r2b-settings-symbol"><i class="fa-solid fa-brain"></i></span>' +
-        '<div><strong>NPC · 人物决策</strong><small>R2-B 实验版 · 独立判定 / 一次性注入</small></div></div>' +
-        '<button class="menu_button npc-r2b-open-button" id="npc-r2b-open">打开实验台 <i class="fa-solid fa-arrow-up-right-from-square"></i></button>' +
+        '  <div class="inline-drawer">' +
+        '    <div class="inline-drawer-toggle inline-drawer-header" role="button" tabindex="0" aria-label="展开NPC人物决策设置">' +
+        '      <b>NPC · 人物决策</b>' +
+        '      <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>' +
+        '    </div>' +
+        '    <div class="inline-drawer-content" style="display:none">' +
+        '      <p class="npc-r2b-settings-note">R2-B 实验版 · 独立判定 / 一次性注入</p>' +
+        '      <button type="button" class="menu_button npc-r2b-open-button" id="npc-r2b-open">打开实验台</button>' +
+        '    </div>' +
+        '  </div>' +
         '</div>'
     );
     const settingsHost = $('#extensions_settings2').length ? $('#extensions_settings2') : $('#extensions_settings');
     settingsHost.append(entry);
     entry.find('#npc-r2b-open').on('click', e => {
         e.preventDefault();
+        // Prevent any ancestor click handlers from closing the newly opened dialog.
+        e.stopPropagation();
         setTimeout(openPanel, 0);
     });
 
