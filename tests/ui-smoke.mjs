@@ -49,6 +49,7 @@ assert.equal($('#npc-r2b-input').length,1,'Input editor must exist');
 assert.equal($('#npc-r2b-profile option[value="lite"]').length,1,'Profile must be listed');
 
 $('#npc-r2b-wand').trigger('click');
+await new Promise(resolve => setTimeout(resolve, 30));
 assert($('#npc-r2b-overlay').hasClass('r2b-visible'),'Wand click must open the dialog');
 assert.equal($('#npc-r2b-overlay').attr('aria-hidden'),'false');
 
@@ -60,6 +61,7 @@ $('#npc-r2b-close').trigger('click');
 assert(!$('#npc-r2b-overlay').hasClass('r2b-visible'),'Close button must close the dialog');
 
 $('#npc-r2b-open').trigger('click');
+await new Promise(resolve => setTimeout(resolve, 30));
 assert($('#npc-r2b-overlay').hasClass('r2b-visible'),'Settings shortcut must open the same dialog');
 
 $('.npc-r2b-tab[data-tab="test"]').trigger('click');
