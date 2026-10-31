@@ -1,0 +1,9 @@
+{
+  "name": "npc-independent-api",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "main": "server/index.mjs",
+  "engines": { "node": ">=18" },
+  "scripts": { "test:channels": "node --test tests/providers.test.mjs tests/channels-server.test.mjs" }
+}
