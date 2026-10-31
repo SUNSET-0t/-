@@ -1,12 +1,12 @@
 {
-  "display_name": "NPC 人物决策 · 独立渠道实验版",
+  "display_name": "NPC 人物决策 · 原生调用版",
   "loading_order": 100,
   "requires": [],
   "optional": [],
-  "js": "release-0.2.1.js",
+  "js": "release-0.3.0.js",
   "css": "style.css",
   "author": "NPC Simulator Project",
-  "version": "0.2.1-r2b",
+  "version": "0.3.0-r2b",
   "homePage": "https://github.com/SUNSET-0t/-",
   "auto_update": true,
   "generate_interceptor": "npcR2BInterceptor"

@@ -1,49 +1,40 @@
-name: Validate R2-B extension
+name: Native extension validation
 on:
   push:
-    branches: [main, 'fix/**']
+    branches: [main, 'fix/**', 'feature/**']
   pull_request:
 permissions:
   contents: read
 jobs:
-  syntax-and-ui:
+  native-api-and-mobile:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
+    env:
+      ST_SOURCE_DIR: /tmp/npc-st-source
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check module syntax
+      - name: Fetch pinned native host source for contract tests (no secrets)
         run: |
-          for file in bootstrap.js panel-host.js index.js prompts.js fixtures.js; do
-            node --input-type=module --check < "$file"
-          done
-          node --check tests/browser-ui.mjs
-      - name: Check extension manifest and files
+          mkdir -p "$ST_SOURCE_DIR"
+          curl --fail --silent --show-error 'https://raw.githubusercontent.com/SillyTavern/SillyTavern/06bde939fb1e9c4c8d8641d810f0a916b5bce127/src/endpoints/secrets.js' > "$ST_SOURCE_DIR/secrets.js"
+      - name: Syntax and native credential/transport contracts
         run: |
-          node --input-type=module <<'NODE'
-          import { readFileSync, existsSync } from 'node:fs';
-          const manifest = JSON.parse(readFileSync('manifest.json', 'utf8'));
-          for (const path of [manifest.js, manifest.css, 'index.js', 'panel-host.js', 'panel-host.css', 'prompts.js', 'fixtures.js']) {
-            if (!path || !existsSync(path)) throw new Error('Missing file: ' + path);
-          }
-          if (manifest.generate_interceptor !== 'npcR2BInterceptor') throw new Error('Wrong interceptor');
-          if (!readFileSync('index.js','utf8').includes('globalThis.' + manifest.generate_interceptor)) throw new Error('Missing interceptor');
-          console.log('Manifest and files verified');
-          NODE
-      - name: Install test dependencies
-        run: npm install --no-save --no-package-lock jquery@3.7.1 jsdom@25 playwright@1.56.1
-      - name: Run existing logic and DOM smoke test
-        run: node tests/ui-smoke.mjs
-      - name: Install real browser
+          for file in native/*.mjs tests/native*.mjs release-0.3.0.js; do node --check "$file"; done
+          node --test tests/native-client.test.mjs
+          node -e "const fs=require('fs'),m=JSON.parse(fs.readFileSync('manifest.json'));if(m.js!=='release-0.3.0.js')throw Error('wrong active entry');for(const f of ['native/client.mjs','native/protocol.mjs','native/ui.mjs','native/entry.mjs']){const s=fs.readFileSync(f,'utf8');if(/fetch\(['\"]https?:/.test(s))throw Error('direct vendor request');}"
+      - name: Install browser test dependencies
+        run: npm install --no-save --no-package-lock jquery@3.7.1 playwright@1.56.1 express@4.21.2
+      - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Check mobile and desktop visibility and interactions
-        run: node tests/browser-ui.mjs
-      - name: Save browser screenshots
+      - name: Phone and desktop native-host integration (mock provider, no paid API)
+        run: node tests/native-browser.mjs
+      - name: Save test screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: npc-r2b-ui-screenshots
+          name: npc-native-ui
           path: test-artifacts/
           if-no-files-found: ignore

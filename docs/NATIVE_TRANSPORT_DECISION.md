@@ -1,36 +1,25 @@
-# 当前优先决定：复用酒馆原生请求与凭据能力
+# 原生调用决定 · v0.3.0 实现说明
 
-状态：用户确认的改造要求，替代 v0.2.x 默认要求安装 npc-independent-api 服务器模块的路径。本文件不是新版本发布说明，现有运行代码未因本文自动改变。
+用户最终强调的是安装与使用简单，而非怀疑已有密钥泄露。正常使用不允许强制安装配套服务、修改 config.yaml 或维护两个副本。独立渠道、官方地址预设、动态模型与阶段选择仍保留。
 
-## 用户目标
-用户以手机操作酒馆为主，电脑暂不在身边。要求像普通网页扩展一样安装和调用辅助 API，不额外安装服务端模块、不手动改 config.yaml，同时担心 API Key 泄露。
+本版活动入口为 release-0.3.0.js → native/entry.mjs，不导入旧固定样本/服务器入口。所有辅助调用经酒馆同源原生后端；元数据与 Key 引用保存在插件设置，明文 Key 仅在输入时提交原生 secrets/write，不写普通设置、聊天、世界书、日志或代码库。
 
-## 必须保留
-插件内渠道管理、常用官方地址预设、接口实际返回的模型列表、不同阶段选择模型；不强制使用正文模型、不把 Connection Profiles 变回唯一的界面入口。默认每次必要判断尽量只发一次辅助请求，不自动审核重Roll。
+## 先前“完全不改变活动项”的约束需如实限定
 
-## 调用与凭据方向
-优先复用酒馆现有的同源后端请求与凭据管理。已核对 release/public/scripts/extensions/shared.js：单次 ChatCompletionService 请求可指定 model、source、secret_id、自定义地址等。但这只证明请求层有参数覆盖能力，不代表完整渠道保存、模型发现和所有协议都已经验证。
+核对的原生 secrets/write 必定将新项设为 active；目前没有非活动追加接口。不能假装传 active:false 就能解决，也不能把 write→rotate 说成原子隔离。本版实施新增后恢复原默认并验证；复用已有 ID 不进行 write/rotate。不存在旧默认时创建空默认，以保持默认有效值为空。
 
-Key 不写入 extensionSettings、localStorage、聊天、世界书、提示词、普通导出、日志、错误文本或 GitHub。正常请求优先用已保存密钥的引用，不回读完整 Key，不要求开启 allowKeysExposure。
+本页面保存串行化，已在生成时禁止保存，生成拦截等待进行中的保存。记录无密钥的恢复信息，异常时校验并暂停辅助请求；不覆盖另一窗口的显式默认切换。Web Locks 可用时串行本插件多个窗口操作，但酒馆其它界面/插件不一定遵守锁，故仍不是全服务器事务。
 
-新增独立密钥必须验证：原正文的活动密钥、模型、地址与连接选择不变。原生 secrets write 会改变同类活动项，不能默默采用“先切换再切回”并宣传原子隔离。仍需确定可靠的保存方案；验证不通过就明确限制，不回退为明文普通设置存储或额外安装服务的强制要求。
+正常保存完成后，正文的 model/source/url 与原默认有效密钥保持原样；保存过程中在其它窗口启动同类默认请求仍有竞态风险，应避免。这个限制写入界面与 README，不声称零风险。
 
-调用目标只允许用户明确配置的提供商。不能悄悄增加开发者转发服务器、上传遥测中的凭据、让 Key 进入模型输入。保留官方地址校验和必要的脱敏检查。
+## 费用与未实现范围
 
-## 安全解释
-额外的本地服务器模块不等于已经发生泄露；不需要额外安装的网页扩展也不自动安全。不要指称未审计的其他插件泄露或安全。
+读取本地设置/密钥元数据、保存、模型列表不触发生成。测试生成必须确认，固定短输入，一次请求，无自动重试或正文重Roll。原生宿主和服务商可能对思考预算有自身处理，实际费用仍以服务商计量。
 
-API 地址和 API Key 不是一回事。固定官方 Base URL 可以公开，Key 是认证秘密。真正风险包括普通前端配置明文存储、第三方扩展读取、日志或公开仓库泄露，以及手机到酒馆经公网 HTTP 明文传输。服务商 HTTPS 不会自动保护前一段 HTTP 链路。
+当前聊天自动取材和人物决策流程后续接入。通用界面不再以测试角色和日期填空，正常使用不需要手写人物 JSON。当前版本只承诺已经实现的渠道流程。
 
-服务端保存也不是对服务器管理员的隔离，不能承诺零泄露。只向用户说明代码实际做到的保护与剩余风险。发现明确泄露时才建议吊销/重建 Key，不以一个界面报错推断已泄露。
+## 来源
 
-## 当前安排
-用户暂停配套服务安装，不再要求其继续 clone、开启 enableServerPlugins 或清缓存。完成原生请求、密钥和主配置不变的兼容测试后再发布替代版本。不得声称这份要求文档已让当前 0.2.1 变成免安装版。
-
-参考：
 - https://docs.sillytavern.app/for-contributors/writing-extensions/
-- https://docs.sillytavern.app/for-contributors/provider-integrations/
-- https://docs.sillytavern.app/usage/faq/
-- https://docs.sillytavern.app/usage/remoteconnections/
-- https://github.com/SillyTavern/SillyTavern/blob/release/public/scripts/extensions/shared.js
-- https://github.com/SillyTavern/SillyTavern/blob/release/src/endpoints/secrets.js
+- https://github.com/SillyTavern/SillyTavern/blob/06bde939fb1e9c4c8d8641d810f0a916b5bce127/src/endpoints/secrets.js
+- https://github.com/SillyTavern/SillyTavern/blob/06bde939fb1e9c4c8d8641d810f0a916b5bce127/src/endpoints/backends/chat-completions.js
