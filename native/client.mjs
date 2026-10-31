@@ -1,7 +1,7 @@
 import {VERSION,STORE,STAGES,PROVIDERS,NativeError,provider,checkedUrl,checkedModel,options,routePayload,generationPayload,modelList,generatedText} from './protocol.mjs?v=0.3.0';
 const clone=value=>JSON.parse(JSON.stringify(value));
 const id=()=>globalThis.crypto?.randomUUID?.()||'npc-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
-// Only the native same-origin endpoints below may be called. Never /api/plugins, /secrets/find or /secrets/view.
+// Native same-origin endpoints only. Never call a companion service or plaintext readback endpoint.
 const ENDPOINTS=new Set(['/api/secrets/read','/api/secrets/write','/api/secrets/rotate','/api/backends/chat-completions/status','/api/backends/chat-completions/generate']);
 export function createNativeClient({context=()=>globalThis.SillyTavern?.getContext?.(),fetcher=(...args)=>fetch(...args),locks=globalThis.navigator?.locks}={}){
  let busy=false,saving=false,generationActive=false,credentialsFailure=false,gate=Promise.resolve(),releaseGate;
@@ -16,7 +16,6 @@ export function createNativeClient({context=()=>globalThis.SillyTavern?.getConte
  }
  async function secretMetadata(){const raw=await post('/api/secrets/read');if(!raw||typeof raw!=='object'||Array.isArray(raw))throw new NativeError('酒馆密钥管理接口格式不兼容。');const out={};
   for(const type of new Set(PROVIDERS.map(p=>p.secretType).filter(Boolean))){const values=raw[type];if(values!=null&&!Array.isArray(values))throw new NativeError('此酒馆不支持按 ID 引用密钥，请升级酒馆；不会用默认正文密钥代替。');out[type]=(values||[]).map(v=>({id:String(v.id||''),label:String(v.label||''),active:v.active===true})).filter(v=>v.id);}
-  // Drop raw values immediately. We neither expose nor persist masked/plain values returned by the host.
   return out;
  }
  function active(list){return list.find(v=>v.active)?.id||null;}
@@ -28,20 +27,22 @@ export function createNativeClient({context=()=>globalThis.SillyTavern?.getConte
   const metadata=await secretMetadata(),list=metadata[pending.type]||[];
   const created=list.filter(v=>v.label===pending.label);const newId=pending.newId||created.at(-1)?.id;
   if(pending.previousId&&list.some(v=>v.id===pending.previousId)&&newId&&active(list)===newId){await post('/api/secrets/rotate',{key:pending.type,id:pending.previousId});const check=await secretMetadata();if(active(check[pending.type])!==pending.previousId)throw new NativeError('原默认密钥恢复校验失败。');}
-  // Do not overwrite an intervening explicit key change from another window.
+  // Never overwrite an intervening explicit key change from another window.
   if(newId&&active(list)===newId&&pending.previousId&&!list.some(v=>v.id===pending.previousId))throw new NativeError('原默认密钥已被删除，请在酒馆密钥管理中确认默认项。');
   data().pendingKey=null;persist();credentialsFailure=false;
  }
  async function writeKey(type,key,channelId){if(typeof key!=='string'||!key.trim()||key.length>8192||/[\r\n\x00]/.test(key))throw new NativeError('密钥格式无效。');
   const metadata=await secretMetadata();let previousId=active(metadata[type]);
-  // A blank active item preserves the original effective default (empty) if this type was never configured.
+  // The effective default remains empty when this secret type was never configured.
   if(!previousId){const blank=await post('/api/secrets/write',{key:type,value:'',label:'[NPC] empty default / 保持原空默认'});if(!blank?.id)throw new NativeError('酒馆未返回密钥 ID。');previousId=blank.id;}
   const label='[NPC] '+channelId+' '+id();data().pendingKey={type,previousId,label,newId:null};persist();
   let created;
   try{created=await post('/api/secrets/write',{key:type,value:key.trim(),label});if(typeof created?.id!=='string'||!created.id)throw new NativeError('酒馆未返回密钥 ID。');data().pendingKey.newId=created.id;persist();await recover();return{type,id:created.id};}
   catch(e){try{await recover();}catch{credentialsFailure=true;throw new NativeError('保存中断且默认密钥恢复未确认，辅助调用已暂停。点“刷新渠道”重试恢复；请勿在其它窗口同时修改密钥。');}throw e;}
  }
- async function save(body){expected(body.expectedRevision);if(generationActive||ctx().streamingProcessor)throw new NativeError('请在当前正文生成结束后保存密钥。');
+ async function save(body){expected(body.expectedRevision);const stream=ctx().streamingProcessor;
+  // A completed StreamingProcessor may stay in the host context. Do not mistake it for an active generation.
+  if(generationActive||(stream&&!stream.isFinished&&!stream.isStopped))throw new NativeError('请在当前正文生成结束后保存密钥。');
   const input=body.channel;if(!input||typeof input!=='object')throw new NativeError('渠道资料无效。');
   const old=input.id?selected(input.id):null,p=provider(input.providerId),url=checkedUrl(input),opts=options(input.options);
   if(data().channels.length>=50&&!old)throw new NativeError('最多保存50个渠道。');
