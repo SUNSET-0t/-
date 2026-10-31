@@ -395,7 +395,7 @@ function mountUi() {
     $('body').append(root);
     const s = settings();
     $('#npc-r2b-prompt').val(JUDGE_PROMPT);
-    $('#npc-r2b-mapping').val('A = 萧离（玩家角色)\nB = 萧薰儿\nC = 萧炎');
+    $('#npc-r2b-mapping').val('A = 萧离（玩家角色）\nB = 萧薰儿\nC = 萧炎');
     $('#npc-r2b-tokens').val(s.maxTokens).on('change', function () {
         s.maxTokens = Math.max(512, Math.min(8192, Number($(this).val()) || 2400));
         saveSettingsDebounced();
