@@ -475,7 +475,12 @@ function generationEnded() {
 }
 
 jQuery(() => {
-    mountUi();
+    try {
+        mountUi();
+    } catch (e) {
+        console.error('[NPC R2-B] 实验台初始化失败', e);
+        if (typeof toastr !== 'undefined') toastr.error('NPC 插件界面初始化失败：' + (e?.message || e), 'NPC R2-B');
+    }
     eventSource.on(event_types.GENERATION_ENDED, generationEnded);
     eventSource.on(event_types.GENERATION_STOPPED, generationEnded);
     eventSource.on(event_types.CHAT_CHANGED, () => {
