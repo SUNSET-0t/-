@@ -5,7 +5,7 @@ let code=fs.readFileSync('tests/automatic-browser.mjs','utf8');
 function replace(old,value){if(!code.includes(old))throw new Error('Budget fixture anchor changed: '+old.slice(0,70));code=code.replace(old,value);}
 replace("'api_key_openai','AUTOMATIC_FAKE_AUX'","'api_key_openrouter','AUTOMATIC_FAKE_AUX'");
 replace("providerId:'openai',baseUrl:'https://api.openai.com/v1'","providerId:'openrouter',baseUrl:'https://openrouter.ai/api/v1'");
-replace("secretRef:{type:'api_key_openai',id:aux}","secretRef:{type:'api_key_openrouter',id:aux}");
+replace("secretRef:{id:aux,type:'api_key_openai'}","secretRef:{id:aux,type:'api_key_openrouter'}");
 code=code.replaceAll('aux-model','deepseek/deepseek-v4.1-flash-1017');
 replace("release-0.4.0.js","release-0.4.1.js");
 replace("const text=providerMode==='bad'?'bad-json':decision(material);",`assert.equal(req.body.max_tokens,8192);assert.equal(req.body.reasoning_effort,'low');
