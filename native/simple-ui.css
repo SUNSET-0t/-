@@ -1,0 +1,20 @@
+/* Simple mode adds no global button/layout rules. */
+#npc-r2b-overlay .nc-simple .nc-current{padding:13px;border:1px solid var(--SmartThemeBorderColor);border-radius:12px;margin:10px 0;background:var(--SmartThemeBlurTintColor)}
+#npc-r2b-overlay .nc-simple .nc-current p{margin:7px 0;line-height:1.6;overflow-wrap:anywhere}
+#npc-r2b-overlay .nc-simple .nc-current small{display:block;line-height:1.5;opacity:.8}
+#npc-r2b-overlay .nc-simple .nc-fold{margin-top:15px;border-top:1px solid var(--SmartThemeBorderColor);padding-top:13px}
+#npc-r2b-overlay .nc-simple .nc-fold summary{line-height:1.6;font-weight:600;cursor:pointer}
+#npc-r2b-overlay .nc-simple .nc-stage{margin:10px 0;padding:11px}
+#npc-r2b-overlay .nc-simple .nc-inline-actions{display:flex;gap:8px;flex-wrap:wrap;margin:5px 0 14px}
+#npc-r2b-overlay .nc-simple .nc-model-picker{display:flex;flex-direction:column;gap:8px;min-width:0}
+#npc-r2b-overlay .nc-simple .nc-picker-extra{padding:6px 0;font-size:12px;opacity:.9}
+#npc-r2b-overlay .nc-simple .nc-picker-extra input[type=text]{margin-top:10px}
+#npc-r2b-overlay .nc-simple input.nc-api-token{font-family:ui-monospace,Consolas,monospace;letter-spacing:1px;min-width:0}
+#npc-r2b-overlay .nc-simple .nc-key-row{flex-wrap:nowrap}
+#npc-r2b-overlay .nc-simple #nc-save,#npc-r2b-overlay .nc-simple #nc-save-simple{width:100%;font-weight:700;border-width:2px}
+#npc-r2b-overlay .nc-simple #nc-add:only-child{width:100%}
+#npc-r2b-overlay .nc-simple [hidden]{display:none!important}
+#npc-r2b-overlay .nc-simple .nc-toolbar h3{font-size:18px;line-height:1.4}
+#npc-r2b-overlay .nc-simple label{line-height:1.5}
+#npc-r2b-overlay .nc-simple #nc-editor .nc-note{font-size:12px}
+@media(max-width:420px){#npc-r2b-overlay .nc-simple .nc-actions button.menu_button{width:100%;flex-basis:100%}#npc-r2b-overlay .nc-simple .nc-inline-actions button.menu_button{flex:1 1 auto;width:auto}#npc-r2b-overlay .nc-simple .nc-key-row button.menu_button{width:max-content;flex:none}}
