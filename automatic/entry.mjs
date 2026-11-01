@@ -1,13 +1,13 @@
 import {installPanelHost} from '../panel-host.js?v=0.4.0';
 import {mountNativeChannels} from '../native/simple-ui.mjs?v=0.3.1';
 import {nativeClient} from '../native/client.mjs?v=0.3.0';
-import {createEngine} from './engine.mjs?v=0.4.0';
-import {createTransport} from './transport.mjs?v=0.4.0';
+import {createEngine} from './engine.mjs?v=0.4.1';
+import {createTransport} from './transport.mjs?v=0.4.1';
 import {createLoreReader} from './host.mjs?v=0.4.0';
-export const VERSION='0.4.0-r2b';
+import {describeOutput} from './output-policy.mjs?v=0.4.1';
+export const VERSION='0.4.1-r2b';
 const context=()=>globalThis.SillyTavern.getContext();
 const engine=createEngine({context,request:createTransport({context}),readLore:createLoreReader(),notify:text=>globalThis.toastr?.error(text,'NPC 人物判断',{timeOut:12000})});
-// Register before any UI interaction. A configured user just sends the normal message.
 globalThis.npcR2BInterceptor=async(chat,max,abort,type)=>{
     try{await nativeClient().beforeGeneration(abort);await engine.intercept(chat,max,abort,type);}
     catch(error){if(typeof abort==='function')abort(true);globalThis.toastr?.error('NPC 生成前检查失败，正文未发送。','NPC');}
@@ -32,15 +32,18 @@ function init(){
     }
     const footer=(text,error=false)=>{const n=root.querySelector('#npc-r2b-status');n.textContent=text;n.classList.toggle('r2b-error',error);};
     const settings=mountNativeChannels(views.advanced,(text,error)=>{if(!error&&/设置已就绪|已保存|全部任务共用/.test(text))engine.refresh();footer(text,error);});
-    const running=e('p','',{class:'na-state',id:'npc-auto-message'}),coverage=e('p','',{class:'nc-note'}),model=e('p','',{class:'nc-note'});
+    const running=e('p','',{class:'na-state',id:'npc-auto-message'}),coverage=e('p','',{class:'nc-note'}),model=e('p','',{class:'nc-note'}),budgetInfo=e('p','',{class:'nc-note',id:'npc-output-summary'});
     const setup=button('配置辅助 API',()=>show('advanced'));
     const pause=button('暂停自动判断',()=>engine.setEnabled(!engine.view().enabled),{id:'npc-auto-toggle'});
     const skip=button('仅下一轮跳过辅助判断',()=>engine.skipOnce(),{id:'npc-auto-skip'});skip.hidden=true;
-    const home=e('div','',{class:'nc-generic-home'});home.append(e('h3','自动运行'),running,model,coverage,setup,pause,skip,e('p','照常发送消息：必要时先进行一次辅助判断，再注入同一轮正文。无需手动执行或注入；不做生成后审核，不自动重跑正文。',{class:'nc-note'}));views.test.append(home);
+    const home=e('div','',{class:'nc-generic-home'});home.append(e('h3','自动运行'),running,model,coverage,budgetInfo,setup,pause,skip,e('p','照常发送消息：必要时先进行一次辅助判断，再注入同一轮正文。无需手动执行或注入；不做生成后审核，不自动重跑正文。',{class:'nc-note'}));views.test.append(home);
     const recordState=e('p','尚未运行',{class:'nc-note'}),actors=e('div','',{id:'npc-auto-actors'}),warning=e('p','',{class:'nc-note'});views.result.append(e('h3','本轮人物判断'),recordState,actors,warning);
     const mode=e('select','',{id:'npc-auto-mode',class:'text_pole'});for(const[value,label]of[['balanced','自动按需（默认）'],['always','每轮判断']])mode.append(e('option',label,{value}));mode.onchange=()=>engine.setMode(mode.value);
+    const outputPolicy=e('select','',{id:'npc-output-policy',class:'text_pole'});for(const[value,label]of[['auto','自动适配旧默认预算（推荐）'],['channel','严格使用接口中保存的参数']])outputPolicy.append(e('option',label,{value}));outputPolicy.onchange=()=>engine.setOutputPolicy(outputPolicy.value);
+    const outputDetail=e('details'),outputJson=e('pre','',{id:'npc-output-diagnostics',class:'na-data'});outputDetail.append(e('summary','本次输出上限与实际用量（不含思考原文）'),outputJson);
     const packet=e('pre','',{class:'na-data'}),details=e('details'),source=e('pre','',{class:'na-data'}),sources=e('details');details.append(e('summary','查看本轮注入文本'),packet);sources.append(e('summary','资料范围与证据编号'),source);
-    views.inject.append(e('h3','进阶查看（不影响默认使用）'),e('p','调用策略'),mode,e('p','自动按需只跳过明确的状态/背包查看等输入；日常互动、含蓄关心和不明确的继续指令仍会判断。每次最多发起一个辅助生成请求。',{class:'nc-note'}),details,sources);
+    views.inject.append(e('h3','进阶查看（不影响默认使用）'),e('p','调用策略'),mode,e('p','自动按需只跳过明确的状态/背包查看等输入；日常互动和继续指令仍会判断。每次最多一个辅助生成请求。',{class:'nc-note'}),details,sources,
+        e('p','辅助输出策略'),outputPolicy,e('p','自动模式仅调整已识别 DeepSeek V4.1 Flash 的旧2048＋默认思考组合：本次上限8192 token；已核对的 OpenRouter/DeepSeek官方接口使用 low 思考。保留思考，不保证绝不截断。其它手动参数不改；上限不是必花用量。',{class:'nc-note'}),outputDetail);
     function badge(s){
         if(!['reading','judging','injected','done','error','skipped'].includes(s.status))return;
         const messages=document.querySelectorAll('#chat .mes[is_user="true"]');const target=messages[messages.length-1]?.querySelector('.mes_block');if(!target)return;
@@ -48,8 +51,10 @@ function init(){
         n.textContent='NPC · '+({reading:'读取资料中',judging:'人物判断中',injected:'已注入本轮',done:s.confirmed?'已参与本轮':'已设置立场',error:'正文前暂停',skipped:'本轮跳过'}[s.status]);n.title=s.message;
     }
     engine.subscribe(s=>{
-        running.textContent=s.message;running.dataset.status=s.status;mode.value=s.mode;setup.hidden=s.configured;pause.hidden=!s.configured;pause.textContent=s.enabled?'暂停自动判断':'恢复自动判断';skip.hidden=s.status!=='error';
+        running.textContent=s.message;running.dataset.status=s.status;mode.value=s.mode;outputPolicy.value=s.outputPolicy;setup.hidden=s.configured;pause.hidden=!s.configured;pause.textContent=s.enabled?'暂停自动判断':'恢复自动判断';skip.hidden=s.status!=='error';
         model.textContent=s.model?'本次辅助模型：'+s.model:'';coverage.textContent=s.coverage?`读取 ${s.coverage.messageIndices.length} 条聊天、${s.coverage.loreRead} 条世界书，约 ${s.coverage.characters} 字符（不是token）。`:'';
+        budgetInfo.textContent=(s.cached?'复用上次有效结果；以下是上次用量，不是新增费用。':'')+describeOutput(s.diagnostics);budgetInfo.hidden=!s.diagnostics;
+        outputJson.textContent=s.diagnostics?JSON.stringify(s.diagnostics,null,2):'尚无本轮请求数据。接口未返回的用量显示为 null，不推定为0。';
         const label={waiting:'等待配置',ready:'自动运行已就绪',reading:'读取资料中',judging:'辅助判断中',injected:'已注入本轮',done:'本轮已处理',skipped:'本轮已跳过',paused:'已暂停',error:'正文前已暂停',stale:'上下文已改变'}[s.status];root.querySelector('#npc-auto-mini').textContent=label||s.status;
         entry.querySelector('.npc-r2b-settings-note').textContent=s.message;footer(s.message,s.status==='error');recordState.textContent=s.decision?`${s.decision.actors.length} 位相关人物；${s.cached?'复用了相同上下文的判断':'本轮辅助判断'}`:'暂无有效人物判断';
         actors.replaceChildren();for(const a of s.decision?.actors||[]){const box=e('section','',{class:'na-actor'});box.append(e('h4',a.name));for(const[k,t]of[['goal','自身目标'],['stance','当前立场'],['known','可知信息'],['unknown','仍不确定'],['response','回应方向'],['initiative','自身下一步']])box.append(e('p',t+'：'+a[k]));box.append(e('small','依据：'+a.evidence.join('、')));actors.append(box);}

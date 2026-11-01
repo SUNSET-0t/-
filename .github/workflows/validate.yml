@@ -8,7 +8,7 @@ permissions:
 jobs:
   native-and-automatic:
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 15
     env:
       ST_SOURCE_DIR: /tmp/npc-st-source
     steps:
@@ -23,11 +23,12 @@ jobs:
           curl --fail --silent --show-error "$BASE/src/endpoints/secrets.js" > "$ST_SOURCE_DIR/secrets.js"
           curl --fail --silent --show-error "$BASE/public/scripts/extensions.js" > "$ST_SOURCE_DIR/extensions.js"
           curl --fail --silent --show-error "$BASE/public/script.js" > "$ST_SOURCE_DIR/script.js"
-      - name: Syntax and offline native/automatic contracts
+          curl --fail --silent --show-error "$BASE/src/endpoints/backends/chat-completions.js" > "$ST_SOURCE_DIR/chat-completions.js"
+      - name: Syntax and native/automatic/output-budget contracts
         run: |
-          for file in automatic/*.mjs native/*.mjs tests/automatic*.mjs tests/settings-regression.mjs release-0.4.0.js; do node --check "$file"; done
-          node --test tests/native-client.test.mjs tests/native-stream.test.mjs tests/native-settings.test.mjs tests/automatic.test.mjs tests/automatic-transport.test.mjs
-          node -e "const fs=require('fs'),m=JSON.parse(fs.readFileSync('manifest.json'));if(m.js!=='release-0.4.0.js')throw Error('Wrong active entry');"
+          for file in automatic/*.mjs native/*.mjs tests/automatic*.mjs tests/output*.mjs tests/settings-regression.mjs release-0.4.1.js; do node --check "$file"; done
+          node --test tests/native-client.test.mjs tests/native-stream.test.mjs tests/native-settings.test.mjs tests/automatic.test.mjs tests/automatic-transport.test.mjs tests/output-policy.test.mjs
+          node -e "const fs=require('fs'),m=JSON.parse(fs.readFileSync('manifest.json'));if(m.js!=='release-0.4.1.js')throw Error('Wrong active entry');"
       - name: Install test dependencies
         run: npm install --no-save --no-package-lock jquery@3.7.1 playwright@1.56.1 express@4.21.2
       - name: Install Chromium
@@ -36,6 +37,8 @@ jobs:
         run: node tests/settings-regression.mjs
       - name: Ordinary-send automatic pipeline on mobile and desktop
         run: node tests/automatic-browser.mjs
+      - name: DeepSeek output-budget and truncation diagnostics on mobile and desktop
+        run: node tests/output-budget-browser.mjs
       - name: Save test screenshots
         if: always()
         uses: actions/upload-artifact@v4
