@@ -1,11 +1,11 @@
 import {installPanelHost} from '../panel-host.js?v=0.4.0';
 import {mountNativeChannels} from '../native/simple-ui.mjs?v=0.3.1';
 import {nativeClient} from '../native/client.mjs?v=0.3.0';
-import {createEngine} from './engine.mjs?v=0.4.1';
+import {createEngine} from './engine.mjs?v=0.4.2';
 import {createTransport} from './transport.mjs?v=0.4.1';
 import {createLoreReader} from './host.mjs?v=0.4.0';
 import {describeOutput} from './output-policy.mjs?v=0.4.1';
-export const VERSION='0.4.1-r2b';
+export const VERSION='0.4.2-r2b';
 const context=()=>globalThis.SillyTavern.getContext();
 const engine=createEngine({context,request:createTransport({context}),readLore:createLoreReader(),notify:text=>globalThis.toastr?.error(text,'NPC 人物判断',{timeOut:12000})});
 globalThis.npcR2BInterceptor=async(chat,max,abort,type)=>{
@@ -41,7 +41,7 @@ function init(){
     const mode=e('select','',{id:'npc-auto-mode',class:'text_pole'});for(const[value,label]of[['balanced','自动按需（默认）'],['always','每轮判断']])mode.append(e('option',label,{value}));mode.onchange=()=>engine.setMode(mode.value);
     const outputPolicy=e('select','',{id:'npc-output-policy',class:'text_pole'});for(const[value,label]of[['auto','自动适配旧默认预算（推荐）'],['channel','严格使用接口中保存的参数']])outputPolicy.append(e('option',label,{value}));outputPolicy.onchange=()=>engine.setOutputPolicy(outputPolicy.value);
     const outputDetail=e('details'),outputJson=e('pre','',{id:'npc-output-diagnostics',class:'na-data'});outputDetail.append(e('summary','本次输出上限与实际用量（不含思考原文）'),outputJson);
-    const packet=e('pre','',{class:'na-data'}),details=e('details'),source=e('pre','',{class:'na-data'}),sources=e('details');details.append(e('summary','查看本轮注入文本'),packet);sources.append(e('summary','资料范围与证据编号'),source);
+    const packet=e('pre','',{class:'na-data'}),details=e('details'),source=e('pre','',{class:'na-data',id:'npc-source-diagnostics'}),sources=e('details');details.append(e('summary','查看本轮注入文本'),packet);sources.append(e('summary','资料范围与人物身份校验'),source);
     views.inject.append(e('h3','进阶查看（不影响默认使用）'),e('p','调用策略'),mode,e('p','自动按需只跳过明确的状态/背包查看等输入；日常互动和继续指令仍会判断。每次最多一个辅助生成请求。',{class:'nc-note'}),details,sources,
         e('p','辅助输出策略'),outputPolicy,e('p','自动模式仅调整已识别 DeepSeek V4.1 Flash 的旧2048＋默认思考组合：本次上限8192 token；已核对的 OpenRouter/DeepSeek官方接口使用 low 思考。保留思考，不保证绝不截断。其它手动参数不改；上限不是必花用量。',{class:'nc-note'}),outputDetail);
     function badge(s){
@@ -57,8 +57,8 @@ function init(){
         outputJson.textContent=s.diagnostics?JSON.stringify(s.diagnostics,null,2):'尚无本轮请求数据。接口未返回的用量显示为 null，不推定为0。';
         const label={waiting:'等待配置',ready:'自动运行已就绪',reading:'读取资料中',judging:'辅助判断中',injected:'已注入本轮',done:'本轮已处理',skipped:'本轮已跳过',paused:'已暂停',error:'正文前已暂停',stale:'上下文已改变'}[s.status];root.querySelector('#npc-auto-mini').textContent=label||s.status;
         entry.querySelector('.npc-r2b-settings-note').textContent=s.message;footer(s.message,s.status==='error');recordState.textContent=s.decision?`${s.decision.actors.length} 位相关人物；${s.cached?'复用了相同上下文的判断':'本轮辅助判断'}`:'暂无有效人物判断';
-        actors.replaceChildren();for(const a of s.decision?.actors||[]){const box=e('section','',{class:'na-actor'});box.append(e('h4',a.name));for(const[k,t]of[['goal','自身目标'],['stance','当前立场'],['known','可知信息'],['unknown','仍不确定'],['response','回应方向'],['initiative','自身下一步']])box.append(e('p',t+'：'+a[k]));box.append(e('small','依据：'+a.evidence.join('、')));actors.append(box);}
-        warning.textContent=[...(s.warnings||[]),...(s.decision?.notes||[])].join('\n');packet.textContent=s.packet||'本轮没有注入内容。';source.textContent=JSON.stringify({coverage:s.coverage,sources:s.sources,warnings:s.warnings},null,2);badge(s);
+        actors.replaceChildren();for(const a of s.decision?.actors||[]){const box=e('section','',{class:'na-actor'});box.append(e('h4',a.name));for(const[k,t]of[['goal','自身目标'],['stance','当前立场'],['known','可知信息'],['unknown','仍不确定'],['response','回应方向'],['initiative','自身下一步']])box.append(e('p',t+'：'+a[k]));box.append(e('small','行为依据：'+a.evidence.join('、')),e('small','身份出处：'+(a.identity_evidence||[]).join('、')));actors.append(box);}
+        warning.textContent=[...(s.warnings||[]),...(s.decision?.notes||[])].join('\n');packet.textContent=s.packet||'本轮没有注入内容。';source.textContent=JSON.stringify({coverage:s.coverage,sources:s.sources,warnings:s.warnings,validation:s.validation},null,2);badge(s);
     });
     new MutationObserver(()=>{if(root.hidden||root.getAttribute('aria-hidden')==='true')settings.clearSensitive();}).observe(root,{attributes:true,attributeFilter:['hidden','aria-hidden']});
     window.addEventListener('pagehide',()=>{settings.clearSensitive();engine.invalidate('页面已退出');});
