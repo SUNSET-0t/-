@@ -1,0 +1,11 @@
+#npc-r2b-overlay .na-state{padding:12px;border:1px solid var(--SmartThemeBorderColor);border-radius:10px;line-height:1.6;overflow-wrap:anywhere}
+#npc-r2b-overlay .na-state[data-status=error]{border-color:#b95151}
+#npc-r2b-overlay .na-actor{border:1px solid var(--SmartThemeBorderColor);border-radius:12px;padding:12px;margin:10px 0}
+#npc-r2b-overlay .na-actor h4{margin:4px 0 8px}
+#npc-r2b-overlay .na-actor p{font-size:13px;line-height:1.65;overflow-wrap:anywhere}
+#npc-r2b-overlay .na-data{white-space:pre-wrap;overflow-wrap:anywhere;max-height:50vh;overflow:auto;font-size:12px;line-height:1.6}
+#npc-r2b-overlay .npc-r2b-view[data-view=inject] details{margin:16px 0}
+#npc-r2b-overlay .nc-generic-home button{margin-top:10px}
+#npc-r2b-overlay [hidden]{display:none!important}
+.npc-auto-message-badge{font:inherit;font-size:11px;line-height:1.5;border:1px solid var(--SmartThemeBorderColor);border-radius:9px;padding:3px 7px;margin:5px 0;background:var(--SmartThemeBlurTintColor);color:var(--SmartThemeBodyColor);cursor:pointer}
+.npc-r2b-settings-entry #npc-r2b-open{width:max-content;max-width:100%;white-space:nowrap;padding:8px 10px}

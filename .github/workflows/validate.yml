@@ -1,4 +1,4 @@
-name: Native extension validation
+name: Automatic NPC pipeline validation
 on:
   push:
     branches: [main, 'fix/**', 'feature/**']
@@ -6,8 +6,7 @@ on:
 permissions:
   contents: read
 jobs:
-  native-api-and-mobile:
-    # Keep the runner compatible with the pinned Playwright browser, not ubuntu-latest.
+  native-and-automatic:
     runs-on: ubuntu-24.04
     timeout-minutes: 12
     env:
@@ -17,25 +16,30 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Fetch pinned native host source for contract tests (no secrets)
+      - name: Fetch pinned host source (no credentials or provider calls)
         run: |
           mkdir -p "$ST_SOURCE_DIR"
-          curl --fail --silent --show-error 'https://raw.githubusercontent.com/SillyTavern/SillyTavern/06bde939fb1e9c4c8d8641d810f0a916b5bce127/src/endpoints/secrets.js' > "$ST_SOURCE_DIR/secrets.js"
-      - name: Syntax and native credential/transport/settings contracts
+          BASE='https://raw.githubusercontent.com/SillyTavern/SillyTavern/06bde939fb1e9c4c8d8641d810f0a916b5bce127'
+          curl --fail --silent --show-error "$BASE/src/endpoints/secrets.js" > "$ST_SOURCE_DIR/secrets.js"
+          curl --fail --silent --show-error "$BASE/public/scripts/extensions.js" > "$ST_SOURCE_DIR/extensions.js"
+          curl --fail --silent --show-error "$BASE/public/script.js" > "$ST_SOURCE_DIR/script.js"
+      - name: Syntax and offline native/automatic contracts
         run: |
-          for file in native/*.mjs tests/native*.mjs release-0.3.1.js; do node --check "$file"; done
-          node --test tests/native-client.test.mjs tests/native-stream.test.mjs tests/native-settings.test.mjs
-          node -e "const fs=require('fs'),m=JSON.parse(fs.readFileSync('manifest.json'));if(m.js!=='release-0.3.1.js')throw Error('wrong active entry');const s=fs.readFileSync('native/simple-ui.mjs','utf8');if(s.includes(\"n('form'\")||s.includes('new-password'))throw Error('login form semantics');"
-      - name: Install browser test dependencies
+          for file in automatic/*.mjs native/*.mjs tests/automatic*.mjs tests/settings-regression.mjs release-0.4.0.js; do node --check "$file"; done
+          node --test tests/native-client.test.mjs tests/native-stream.test.mjs tests/native-settings.test.mjs tests/automatic.test.mjs tests/automatic-transport.test.mjs
+          node -e "const fs=require('fs'),m=JSON.parse(fs.readFileSync('manifest.json'));if(m.js!=='release-0.4.0.js')throw Error('Wrong active entry');"
+      - name: Install test dependencies
         run: npm install --no-save --no-package-lock jquery@3.7.1 playwright@1.56.1 express@4.21.2
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
-      - name: Phone and desktop simple settings integration (no paid API)
-        run: node tests/native-browser.mjs
+      - name: Existing simple-setup and key-field regressions
+        run: node tests/settings-regression.mjs
+      - name: Ordinary-send automatic pipeline on mobile and desktop
+        run: node tests/automatic-browser.mjs
       - name: Save test screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: npc-native-ui
+          name: npc-automatic-ui
           path: test-artifacts/
           if-no-files-found: ignore
