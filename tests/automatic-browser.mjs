@@ -44,13 +44,12 @@ try{
  for(const[label,width]of[['narrow',320],['mobile',393],['desktop',1366]]){
     providerMode='ok';trace.length=0;const context=await browser.newContext({viewport:{width,height:900},hasTouch:width<500,isMobile:width<500});const page=await context.newPage();
     const click=s=>width<500?page.locator(s).tap():page.locator(s).click();await page.goto(url);await page.waitForFunction(()=>document.getElementById('npc-auto-mini')?.textContent.includes('已就绪'));
-    // Never open the plugin or click run/arm before this ordinary send.
     const first=await page.evaluate(()=>fixtureSend('接下来照常相处，多关心林乔一点。'));assert(!first.aborted);assert.deepEqual(trace.map(t=>t.kind),['aux','main']);assert(trace[1].body.messages.some(m=>m.content.includes('[NPC_AUTONOMY_CURRENT]')));assert(trace[1].body.messages.some(m=>m.content==='ORIGINAL_WORLD_AND_PRESET'));
     assert.equal(await page.evaluate(()=>ctx.chat.filter(m=>m.mes.includes('[NPC_AUTONOMY_CURRENT]')).length),0);assert.equal(await page.evaluate(()=>ctx.extensionPrompts['80_NPC_AUTONOMY_CURRENT'].value),'');
     assert.equal(host.manager.readSecret('api_key_openai'),'PRIMARY_KEY_FAKE');assert((await page.locator('.npc-auto-message-badge').last().innerText()).includes('已参与本轮'));
     await click('#npc-r2b-wand');await page.locator('#npc-auto-message').waitFor({state:'visible'});assert((await page.locator('#npc-auto-message').innerText()).includes('已确认'));
     await click('.npc-r2b-tab[data-tab=result]');fs.mkdirSync('test-artifacts',{recursive:true});await page.screenshot({path:`test-artifacts/automatic-result-${label}.png`});assert((await page.locator('#npc-auto-actors').innerText()).includes('林乔'));
-    await click('.npc-r2b-tab[data-tab=inject]');assert((await page.locator('.na-data').first().innerText()).includes('[NPC_AUTONOMY_CURRENT]'));
+    await click('.npc-r2b-tab[data-tab=inject]');await click('.npc-r2b-view[data-view=inject] details:first-of-type > summary');assert((await page.locator('.na-data').first().innerText()).includes('[NPC_AUTONOMY_CURRENT]'));
     await click('.npc-r2b-tab[data-tab=advanced]');assert(await page.locator('#nc-save-simple').isVisible());
     await click('#npc-r2b-close');
     const before=trace.length;await page.evaluate(()=>fixtureSend(null,'swipe'));assert.equal(trace.slice(before).filter(t=>t.kind==='aux').length,0);assert.equal(trace.slice(before).filter(t=>t.kind==='main').length,1);
